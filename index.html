@@ -25,7 +25,6 @@
     <script>
         const repo = "ivanshtork14/sshtorikk.github.io";
         const filePath = "data.json";
-        const token = "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"; 
         
         async function fetchData() {
             try {
@@ -34,53 +33,21 @@
                 return await response.json();
             } catch (error) {
                 console.error("Ошибка при получении данных:", error.message);
-                return { likes: {}, dislikes: {}, comments: {} };
+                return { posts: [], likes: {}, dislikes: {}, comments: {} };
             }
         }
 
-        async function getSha() {
-            try {
-                const response = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`);
-                if (response.status === 404) return null;
-                const data = await response.json();
-                if (response.ok) return data.sha;
-                throw new Error(data.message);
-            } catch (error) {
-                console.error("Ошибка получения SHA:", error.message);
-                return null;
-            }
+        function saveToLocalStorage(data) {
+            localStorage.setItem("blogData", JSON.stringify(data));
         }
 
-        async function saveData(data) {
-            try {
-                const sha = await getSha();
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-                
-                const response = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
-                    method: "PUT",
-                    headers: {
-                        "Authorization": `token ${token}`,
-                        "Accept": "application/vnd.github.v3+json",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: "Обновление данных",
-                        content: content,
-                        sha: sha
-                    })
-                });
-                
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
-                
-                console.log("Данные успешно сохранены!");
-            } catch (error) {
-                console.error("Ошибка сохранения данных:", error.message);
-            }
+        function loadFromLocalStorage() {
+            let data = localStorage.getItem("blogData");
+            return data ? JSON.parse(data) : { likes: {}, dislikes: {}, comments: {} };
         }
 
         async function toggleReaction(id, type) {
-            let data = await fetchData();
+            let data = loadFromLocalStorage();
             let oppositeType = type === 'likes' ? 'dislikes' : 'likes';
             
             if (data[type][id]) {
@@ -89,7 +56,7 @@
                 data[type][id] = 1;
                 delete data[oppositeType][id];
             }
-            await saveData(data);
+            saveToLocalStorage(data);
             updateCounts(data);
         }
 
@@ -105,18 +72,20 @@
 
         function animateButton(id, btnPrefix, animationClass) {
             let btn = document.getElementById(`${btnPrefix}${id}`);
-            btn.classList.add(animationClass);
-            setTimeout(() => btn.classList.remove(animationClass), 300);
+            if (btn) {
+                btn.classList.add(animationClass);
+                setTimeout(() => btn.classList.remove(animationClass), 300);
+            }
         }
 
         async function addComment(id) {
             let commentInput = document.getElementById(`comment-input-${id}`);
             let commentText = commentInput?.value.trim();
             if (commentText) {
-                let data = await fetchData();
+                let data = loadFromLocalStorage();
                 if (!data.comments[id]) data.comments[id] = [];
                 data.comments[id].push(commentText);
-                await saveData(data);
+                saveToLocalStorage(data);
                 commentInput.value = "";
                 loadComments(id, data);
             }
@@ -124,29 +93,85 @@
 
         function updateCounts(data) {
             for (const id in data.likes) {
-                document.getElementById(`likes-${id}`).innerText = data.likes[id] || 0;
+                let likesEl = document.getElementById(`likes-${id}`);
+                if (likesEl) likesEl.innerText = Object.keys(data.likes).length;
             }
             for (const id in data.dislikes) {
-                document.getElementById(`dislikes-${id}`).innerText = data.dislikes[id] || 0;
+                let dislikesEl = document.getElementById(`dislikes-${id}`);
+                if (dislikesEl) dislikesEl.innerText = Object.keys(data.dislikes).length;
             }
         }
 
         function loadComments(id, data) {
             let commentsDiv = document.getElementById(`comments-${id}`);
-            commentsDiv.innerHTML = "";
-            (data.comments[id] || []).forEach(text => {
-                let p = document.createElement("p");
-                p.textContent = text;
-                commentsDiv.appendChild(p);
+            if (commentsDiv) {
+                commentsDiv.innerHTML = "";
+                (data.comments[id] || []).forEach(text => {
+                    let p = document.createElement("p");
+                    p.textContent = text;
+                    commentsDiv.appendChild(p);
+                });
+            }
+        }
+
+        async function loadPosts() {
+            const data = await fetchData();
+            const postsContainer = document.getElementById("posts");
+
+            data.posts.forEach(post => {
+                let postDiv = document.createElement("div");
+                postDiv.className = "post";
+                
+                // Заголовок поста
+                let postTitle = document.createElement("h2");
+                postTitle.textContent = post.title;
+                postDiv.appendChild(postTitle);
+
+                // Содержимое поста
+                let postContent = document.createElement("p");
+                postContent.textContent = post.content;
+                postDiv.appendChild(postContent);
+
+                // Кнопки лайк/дизлайк
+                let buttonsDiv = document.createElement("div");
+                buttonsDiv.className = "buttons";
+                let likeButton = document.createElement("button");
+                likeButton.id = `like-btn-${post.id}`;
+                likeButton.textContent = `Лайк (${data.likes[post.id] || 0})`;
+                likeButton.onclick = () => toggleLike(post.id);
+
+                let dislikeButton = document.createElement("button");
+                dislikeButton.id = `dislike-btn-${post.id}`;
+                dislikeButton.textContent = `Дизлайк (${data.dislikes[post.id] || 0})`;
+                dislikeButton.onclick = () => toggleDislike(post.id);
+
+                buttonsDiv.appendChild(likeButton);
+                buttonsDiv.appendChild(dislikeButton);
+                postDiv.appendChild(buttonsDiv);
+
+                // Комментарии
+                let commentsDiv = document.createElement("div");
+                commentsDiv.id = `comments-${post.id}`;
+                loadComments(post.id, data);
+                postDiv.appendChild(commentsDiv);
+
+                // Инпут для добавления комментария
+                let commentInput = document.createElement("input");
+                commentInput.id = `comment-input-${post.id}`;
+                commentInput.placeholder = "Оставьте комментарий...";
+                postDiv.appendChild(commentInput);
+
+                let commentButton = document.createElement("button");
+                commentButton.textContent = "Добавить комментарий";
+                commentButton.onclick = () => addComment(post.id);
+                postDiv.appendChild(commentButton);
+
+                postsContainer.appendChild(postDiv);
             });
         }
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            let data = await fetchData();
-            updateCounts(data);
-            for (const id in data.comments) {
-                loadComments(id, data);
-            }
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPosts();
         });
     </script>
 </body>
