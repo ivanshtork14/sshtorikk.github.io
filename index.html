@@ -26,26 +26,32 @@
         const repo = "ivanshtork14/sshtorikk.github.io";
         const filePath = "data.json";
         
+        // Функция для загрузки данных с GitHub
         async function fetchData() {
             try {
                 const response = await fetch(`https://raw.githubusercontent.com/${repo}/main/${filePath}`);
                 if (!response.ok) throw new Error("Ошибка загрузки данных");
-                return await response.json();
+                const data = await response.json();
+                console.log("Данные успешно загружены:", data); // Логирование успешной загрузки
+                return data;
             } catch (error) {
                 console.error("Ошибка при получении данных:", error.message);
                 return { posts: [], likes: {}, dislikes: {}, comments: {} };
             }
         }
 
+        // Сохранение данных в localStorage
         function saveToLocalStorage(data) {
             localStorage.setItem("blogData", JSON.stringify(data));
         }
 
+        // Загрузка данных из localStorage
         function loadFromLocalStorage() {
             let data = localStorage.getItem("blogData");
             return data ? JSON.parse(data) : { likes: {}, dislikes: {}, comments: {} };
         }
 
+        // Обработка реакции (лайк/дизлайк)
         async function toggleReaction(id, type) {
             let data = loadFromLocalStorage();
             let oppositeType = type === 'likes' ? 'dislikes' : 'likes';
@@ -60,16 +66,19 @@
             updateCounts(data);
         }
 
+        // Обработка лайка
         async function toggleLike(id) {
             await toggleReaction(id, 'likes');
             animateButton(id, 'like-btn-', 'like');
         }
 
+        // Обработка дизлайка
         async function toggleDislike(id) {
             await toggleReaction(id, 'dislikes');
             animateButton(id, 'dislike-btn-', 'dislike');
         }
 
+        // Анимация кнопок
         function animateButton(id, btnPrefix, animationClass) {
             let btn = document.getElementById(`${btnPrefix}${id}`);
             if (btn) {
@@ -78,6 +87,7 @@
             }
         }
 
+        // Добавление комментария
         async function addComment(id) {
             let commentInput = document.getElementById(`comment-input-${id}`);
             let commentText = commentInput?.value.trim();
@@ -91,6 +101,7 @@
             }
         }
 
+        // Обновление счетчиков лайков и дизлайков
         function updateCounts(data) {
             for (const id in data.likes) {
                 let likesEl = document.getElementById(`likes-${id}`);
@@ -102,6 +113,7 @@
             }
         }
 
+        // Загрузка комментариев
         function loadComments(id, data) {
             let commentsDiv = document.getElementById(`comments-${id}`);
             if (commentsDiv) {
@@ -114,60 +126,65 @@
             }
         }
 
+        // Загрузка постов и отображение
         async function loadPosts() {
             const data = await fetchData();
             const postsContainer = document.getElementById("posts");
 
-            data.posts.forEach(post => {
-                let postDiv = document.createElement("div");
-                postDiv.className = "post";
-                
-                // Заголовок поста
-                let postTitle = document.createElement("h2");
-                postTitle.textContent = post.title;
-                postDiv.appendChild(postTitle);
+            if (data.posts && data.posts.length > 0) {
+                data.posts.forEach(post => {
+                    let postDiv = document.createElement("div");
+                    postDiv.className = "post";
+                    
+                    // Заголовок поста
+                    let postTitle = document.createElement("h2");
+                    postTitle.textContent = post.title;
+                    postDiv.appendChild(postTitle);
 
-                // Содержимое поста
-                let postContent = document.createElement("p");
-                postContent.textContent = post.content;
-                postDiv.appendChild(postContent);
+                    // Содержимое поста
+                    let postContent = document.createElement("p");
+                    postContent.textContent = post.content;
+                    postDiv.appendChild(postContent);
 
-                // Кнопки лайк/дизлайк
-                let buttonsDiv = document.createElement("div");
-                buttonsDiv.className = "buttons";
-                let likeButton = document.createElement("button");
-                likeButton.id = `like-btn-${post.id}`;
-                likeButton.textContent = `Лайк (${data.likes[post.id] || 0})`;
-                likeButton.onclick = () => toggleLike(post.id);
+                    // Кнопки лайк/дизлайк
+                    let buttonsDiv = document.createElement("div");
+                    buttonsDiv.className = "buttons";
+                    let likeButton = document.createElement("button");
+                    likeButton.id = `like-btn-${post.id}`;
+                    likeButton.textContent = `Лайк (${data.likes[post.id] || 0})`;
+                    likeButton.onclick = () => toggleLike(post.id);
 
-                let dislikeButton = document.createElement("button");
-                dislikeButton.id = `dislike-btn-${post.id}`;
-                dislikeButton.textContent = `Дизлайк (${data.dislikes[post.id] || 0})`;
-                dislikeButton.onclick = () => toggleDislike(post.id);
+                    let dislikeButton = document.createElement("button");
+                    dislikeButton.id = `dislike-btn-${post.id}`;
+                    dislikeButton.textContent = `Дизлайк (${data.dislikes[post.id] || 0})`;
+                    dislikeButton.onclick = () => toggleDislike(post.id);
 
-                buttonsDiv.appendChild(likeButton);
-                buttonsDiv.appendChild(dislikeButton);
-                postDiv.appendChild(buttonsDiv);
+                    buttonsDiv.appendChild(likeButton);
+                    buttonsDiv.appendChild(dislikeButton);
+                    postDiv.appendChild(buttonsDiv);
 
-                // Комментарии
-                let commentsDiv = document.createElement("div");
-                commentsDiv.id = `comments-${post.id}`;
-                loadComments(post.id, data);
-                postDiv.appendChild(commentsDiv);
+                    // Комментарии
+                    let commentsDiv = document.createElement("div");
+                    commentsDiv.id = `comments-${post.id}`;
+                    loadComments(post.id, data);
+                    postDiv.appendChild(commentsDiv);
 
-                // Инпут для добавления комментария
-                let commentInput = document.createElement("input");
-                commentInput.id = `comment-input-${post.id}`;
-                commentInput.placeholder = "Оставьте комментарий...";
-                postDiv.appendChild(commentInput);
+                    // Инпут для добавления комментария
+                    let commentInput = document.createElement("input");
+                    commentInput.id = `comment-input-${post.id}`;
+                    commentInput.placeholder = "Оставьте комментарий...";
+                    postDiv.appendChild(commentInput);
 
-                let commentButton = document.createElement("button");
-                commentButton.textContent = "Добавить комментарий";
-                commentButton.onclick = () => addComment(post.id);
-                postDiv.appendChild(commentButton);
+                    let commentButton = document.createElement("button");
+                    commentButton.textContent = "Добавить комментарий";
+                    commentButton.onclick = () => addComment(post.id);
+                    postDiv.appendChild(commentButton);
 
-                postsContainer.appendChild(postDiv);
-            });
+                    postsContainer.appendChild(postDiv);
+                });
+            } else {
+                postsContainer.innerHTML = "<p>Посты не найдены или произошла ошибка при их загрузке.</p>";
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
