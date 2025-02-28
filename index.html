@@ -46,7 +46,7 @@
     <script>
         const repo = "ivanshtork14/sshtorikk.github.io";
         const filePath = "data.json";
-        const token = "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"; 
+        const token = "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"; 
         
         async function fetchData() {
             const response = await fetch(`https://raw.githubusercontent.com/${repo}/main/${filePath}`);
@@ -70,13 +70,17 @@
             });
             return response.json();
         }
-
-        async function getSha() {
-            const response = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`);
-            const data = await response.json();
-            return data.sha;
-        }
-
+async function getSha() {
+    try {
+        const response = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`);
+        const data = await response.json();
+        if (response.ok) return data.sha;
+        else throw new Error(data.message);
+    } catch (error) {
+        console.error("Ошибка получения SHA:", error.message);
+        return null;
+    }
+}
         async function toggleReaction(id, type) {
             let data = await fetchData();
             let oppositeType = type === 'likes' ? 'dislikes' : 'likes';
