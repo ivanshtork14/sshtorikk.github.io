@@ -82,6 +82,73 @@
             color: white;
         }
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            loadData();
+        });
+        
+        function saveData() {
+            let posts = document.querySelectorAll(".post");
+            let data = [];
+            posts.forEach((post, index) => {
+                data.push({
+                    likes: post.querySelector("#like-count").textContent,
+                    dislikes: post.querySelector("#dislike-count").textContent,
+                    comments: Array.from(post.querySelectorAll(".comment p")).map(c => c.textContent)
+                });
+            });
+            localStorage.setItem("blogData", JSON.stringify(data));
+        }
+        
+        function loadData() {
+            let savedData = JSON.parse(localStorage.getItem("blogData"));
+            if (!savedData) return;
+            let posts = document.querySelectorAll(".post");
+            posts.forEach((post, index) => {
+                if (savedData[index]) {
+                    post.querySelector("#like-count").textContent = savedData[index].likes;
+                    post.querySelector("#dislike-count").textContent = savedData[index].dislikes;
+                    let commentSection = post.querySelector(".comments");
+                    savedData[index].comments.forEach(commentText => {
+                        let comment = document.createElement("div");
+                        comment.classList.add("comment");
+                        comment.innerHTML = `<p>${commentText}</p>`;
+                        commentSection.appendChild(comment);
+                    });
+                }
+            });
+        }
+        
+        function toggleSingleReaction(button, type, oppositeType) {
+            let countSpan = button.nextElementSibling;
+            let oppositeButton = button.parentElement.querySelector(`.${oppositeType}`);
+            let oppositeCountSpan = oppositeButton.nextElementSibling;
+            
+            if (button.classList.contains("active")) {
+                button.classList.remove("active");
+                countSpan.textContent = parseInt(countSpan.textContent) - 1;
+            } else {
+                button.classList.add("active");
+                countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                
+                if (oppositeButton.classList.contains("active")) {
+                    oppositeButton.classList.remove("active");
+                    oppositeCountSpan.textContent = parseInt(oppositeCountSpan.textContent) - 1;
+                }
+            }
+            saveData();
+        }
+        
+        function addComment(post, text) {
+            if (!text.trim()) return;
+            let commentSection = post.querySelector(".comments");
+            let comment = document.createElement("div");
+            comment.classList.add("comment");
+            comment.innerHTML = `<p>${text}</p>`;
+            commentSection.appendChild(comment);
+            saveData();
+        }
+    </script>
 </head>
 <body>
     <header>
@@ -95,73 +162,12 @@
                 <button class="btn like" onclick="toggleSingleReaction(this, 'like', 'dislike')">👍</button><span id="like-count">0</span>
                 <button class="btn dislike" onclick="toggleSingleReaction(this, 'dislike', 'like')">👎</button><span id="dislike-count">0</span>
             </div>
-            <div class="comment-box">
-                <textarea id="comment-input" placeholder="Добавьте комментарий..."></textarea>
-                <button class="comment-btn" onclick="addComment()">Отправить</button>
-            </div>
-            <div id="comments"></div>
+            <div class="comments"></div>
+            <input type="text" placeholder="Оставить комментарий..." onkeypress="if(event.key === 'Enter') addComment(this.parentElement, this.value)">
         </div>
     </div>
     <footer>
         <p>&copy; 2025 Shtorik</p>
     </footer>
-    <script>
-        function toggleSingleReaction(button, type, oppositeType) {
-            let countSpan = document.getElementById(`${type}-count`);
-            let oppositeButton = document.querySelector(`.btn.${oppositeType}`);
-            let oppositeCountSpan = document.getElementById(`${oppositeType}-count`);
-            
-            if (button.classList.contains('active')) {
-                button.classList.remove('active');
-                countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
-            } else {
-                button.classList.add('active');
-                countSpan.textContent = parseInt(countSpan.textContent) + 1;
-                
-                if (oppositeButton.classList.contains('active')) {
-                    oppositeButton.classList.remove('active');
-                    oppositeCountSpan.textContent = Math.max(0, parseInt(oppositeCountSpan.textContent) - 1);
-                }
-            }
-        }
-        
-        function addComment() {
-            let commentInput = document.getElementById("comment-input");
-            let commentText = commentInput.value.trim();
-            if (commentText === "") return;
-            
-            let commentsSection = document.getElementById("comments");
-            let commentDiv = document.createElement("div");
-            commentDiv.className = "comment";
-            commentDiv.textContent = commentText;
-            
-            let emojiReactions = document.createElement("div");
-            emojiReactions.className = "emoji-reactions";
-            ["❤️", "😂", "😢", "😡"].forEach(emoji => {
-                let button = document.createElement("button");
-                button.innerHTML = emoji;
-                let countSpan = document.createElement("span");
-                countSpan.textContent = "0";
-                button.onclick = function() { toggleEmojiReaction(this, countSpan, emojiReactions); };
-                emojiReactions.appendChild(button);
-                emojiReactions.appendChild(countSpan);
-            });
-            
-            commentDiv.appendChild(emojiReactions);
-            commentsSection.appendChild(commentDiv);
-            commentInput.value = "";
-        }
-        
-        function toggleEmojiReaction(button, countSpan, parent) {
-            let activeButton = parent.querySelector("button.active");
-            if (activeButton) {
-                activeButton.classList.remove("active");
-                let activeCount = activeButton.nextSibling;
-                activeCount.textContent = Math.max(0, parseInt(activeCount.textContent) - 1);
-            }
-            button.classList.add("active");
-            countSpan.textContent = parseInt(countSpan.textContent) + 1;
-        }
-    </script>
 </body>
 </html>
