@@ -1,5 +1,9 @@
 {
-  "likes": {},
-  "dislikes": {},
-  "comments": {}
+    "posts": [
+        { "id": 1, "title": "Первый пост", "content": "Это контент первого поста" },
+        { "id": 2, "title": "Второй пост", "content": "Это контент второго поста" }
+    ],
+    "likes": {},
+    "dislikes": {},
+    "comments": {}
 }
