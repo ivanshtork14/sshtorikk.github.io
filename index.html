@@ -30,10 +30,9 @@
         async function fetchData() {
             try {
                 const response = await fetch(`https://raw.githubusercontent.com/${repo}/main/${filePath}`);
-                console.log("Ответ от GitHub:", response);
                 if (!response.ok) throw new Error("Ошибка загрузки данных");
                 const data = await response.json();
-                console.log("Данные успешно загружены:", data);
+                console.log("Данные успешно загружены:", data); // Логирование успешной загрузки
                 return data;
             } catch (error) {
                 console.error("Ошибка при получении данных:", error.message);
@@ -56,18 +55,13 @@
         async function toggleReaction(id, type) {
             let data = loadFromLocalStorage();
             let oppositeType = type === 'likes' ? 'dislikes' : 'likes';
-
-            // Если для данного поста нет записи в likes или dislikes, создаём её
-            if (!data[type]) data[type] = {};
-            if (!data[oppositeType]) data[oppositeType] = {};
-
-            if (data[type][id]) {
-                delete data[type][id]; // Удаляем, если уже есть реакция
-            } else {
-                data[type][id] = 1; // Добавляем реакцию
-                delete data[oppositeType][id]; // Удаляем противоположную реакцию
-            }
             
+            if (data[type][id]) {
+                delete data[type][id];
+            } else {
+                data[type][id] = 1;
+                delete data[oppositeType][id];
+            }
             saveToLocalStorage(data);
             updateCounts(data);
         }
