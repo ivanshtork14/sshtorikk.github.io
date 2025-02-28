@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shtorik - Блог</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: white;
+        }
+        header {
+            background: #111;
+            color: #ff9900;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+        .post {
+            background: #1a1a1a;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
+        }
+        .post h2 {
+            font-size: 22px;
+            color: #ff9900;
+            margin: 0 0 10px;
+        }
+        .post p {
+            color: #ddd;
+            font-size: 16px;
+        }
+        .actions, .emoji-reactions {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .btn, .emoji-reactions button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: transform 0.5s ease-in-out, color 0.3s;
+            color: white;
+        }
+        .btn.active, .emoji-reactions button.active {
+            color: #ff9900;
+            transform: rotate(360deg);
+        }
+        .comment {
+            background: #222;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .emoji-reactions span {
+            font-size: 14px;
+            margin-left: 5px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Shtorik
+    </header>
+    <div class="container">
+        <div class="post">
+            <h2>Первая запись</h2>
+            <p>Добро пожаловать в мой блог! Здесь я буду делиться своими мыслями и идеями.</p>
+            <div class="actions">
+                <button class="btn like" onclick="toggleSingleReaction(this, 'like', 'dislike')">👍</button><span id="like-count">0</span>
+                <button class="btn dislike" onclick="toggleSingleReaction(this, 'dislike', 'like')">👎</button><span id="dislike-count">0</span>
+            </div>
+            <div class="comment-box">
+                <textarea id="comment-input" placeholder="Добавьте комментарий..."></textarea>
+                <button class="comment-btn" onclick="addComment()">Отправить</button>
+            </div>
+            <div id="comments"></div>
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2025 Shtorik</p>
+    </footer>
+    <script>
+        function toggleSingleReaction(button, type, oppositeType) {
+            let countSpan = document.getElementById(`${type}-count`);
+            let oppositeButton = document.querySelector(`.btn.${oppositeType}`);
+            let oppositeCountSpan = document.getElementById(`${oppositeType}-count`);
+            
+            if (button.classList.contains('active')) {
+                button.classList.remove('active');
+                countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
+            } else {
+                button.classList.add('active');
+                countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                
+                if (oppositeButton.classList.contains('active')) {
+                    oppositeButton.classList.remove('active');
+                    oppositeCountSpan.textContent = Math.max(0, parseInt(oppositeCountSpan.textContent) - 1);
+                }
+            }
+        }
+        
+        function addComment() {
+            let commentInput = document.getElementById("comment-input");
+            let commentText = commentInput.value.trim();
+            if (commentText === "") return;
+            
+            let commentsSection = document.getElementById("comments");
+            let commentDiv = document.createElement("div");
+            commentDiv.className = "comment";
+            commentDiv.textContent = commentText;
+            
+            let emojiReactions = document.createElement("div");
+            emojiReactions.className = "emoji-reactions";
+            ["❤️", "😂", "😢", "😡"].forEach(emoji => {
+                let button = document.createElement("button");
+                button.innerHTML = emoji;
+                let countSpan = document.createElement("span");
+                countSpan.textContent = "0";
+                button.onclick = function() { toggleEmojiReaction(this, countSpan, emojiReactions); };
+                emojiReactions.appendChild(button);
+                emojiReactions.appendChild(countSpan);
+            });
+            
+            commentDiv.appendChild(emojiReactions);
+            commentsSection.appendChild(commentDiv);
+            commentInput.value = "";
+        }
+        
+        function toggleEmojiReaction(button, countSpan, parent) {
+            let activeButton = parent.querySelector("button.active");
+            if (activeButton) {
+                activeButton.classList.remove("active");
+                let activeCount = activeButton.nextSibling;
+                activeCount.textContent = Math.max(0, parseInt(activeCount.textContent) - 1);
+            }
+            button.classList.add("active");
+            countSpan.textContent = parseInt(countSpan.textContent) + 1;
+        }
+    </script>
+</body>
+</html>
