@@ -1,88 +1,84 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shtorik - Блог</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            color: white;
-        }
-        header {
-            background: #111;
-            color: #ff9900;
-            padding: 15px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .container {
-            width: 100%;
-            max-width: 800px;
-            margin: auto;
-            padding: 20px;
-        }
-        .post {
-            background: #1a1a1a;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
-        }
-        .post h2 {
-            font-size: 22px;
-            color: #ff9900;
-            margin: 0 0 10px;
-        }
-        .post p {
-            color: #ddd;
-            font-size: 16px;
-        }
-        .buttons {
-            margin-top: 10px;
-        }
-        .buttons button {
-            background: #ff9900;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-        .comments {
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        Shtorik
-    </header>
+</header>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        color: white;
+    }
+    header {
+        background: #111;
+        color: #ff9900;
+        padding: 15px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .container {
+        width: 100%;
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+    }
+    .post {
+        background: #1a1a1a;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
+    }
+    .post h2 {
+        font-size: 22px;
+        color: #ff9900;
+        margin: 0 0 10px;
+    }
+    .post p {
+        color: #ddd;
+        font-size: 16px;
+    }
+    .buttons {
+        margin-top: 10px;
+    }
+    .buttons button {
+        background: #ff9900;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        margin-right: 5px;
+        transition: transform 0.3s ease-in-out;
+    }
+    .buttons button:active {
+        transform: scale(1.2);
+    }
+    .comments {
+        margin-top: 15px;
+    }
+</style>
+    <div class="container">
+        <div class="post">
+            <h2>Я люблю свою семью</h2>
+            <p>Я вас всех люблю! Семья – это самое важное в жизни. Спасибо, что вы есть!</p>
+            <div class="buttons">
+                <button onclick="toggleLike(2)" id="like-btn-2">👍 <span id="likes-2">0</span></button>
+                <button onclick="toggleDislike(2)" id="dislike-btn-2">👎 <span id="dislikes-2">0</span></button>
+            </div>
+            <div class="comments" id="comments-2"></div>
+            <input type="text" id="comment-input-2" placeholder="Оставьте комментарий">
+            <button onclick="addComment(2)">Добавить</button>
+        </div>
+    </div>
     <div class="container">
         <div class="post">
             <h2>Первая запись</h2>
             <p>Добро пожаловать в мой блог! Здесь я буду делиться своими мыслями и идеями.</p>
             <div class="buttons">
-                <button onclick="toggleLike(1)">👍 <span id="likes-1">0</span></button>
-                <button onclick="toggleDislike(1)">👎 <span id="dislikes-1">0</span></button>
+                <button onclick="toggleLike(1)" id="like-btn-1">👍 <span id="likes-1">0</span></button>
+                <button onclick="toggleDislike(1)" id="dislike-btn-1">👎 <span id="dislikes-1">0</span></button>
             </div>
             <div class="comments" id="comments-1"></div>
             <input type="text" id="comment-input-1" placeholder="Оставьте комментарий">
             <button onclick="addComment(1)">Добавить</button>
-        </div>
-        <div class="post">
-            <h2>Я вас всех люблю!</h2>
-            <p>Спасибо, что заглянули в мой блог! Мне приятно делиться с вами своими мыслями. ❤️</p>
-            <div class="buttons">
-                <button onclick="toggleLike(2)">👍 <span id="likes-2">0</span></button>
-                <button onclick="toggleDislike(2)">👎 <span id="dislikes-2">0</span></button>
-            </div>
-            <div class="comments" id="comments-2"></div>
-            <input type="text" id="comment-input-2" placeholder="Оставьте комментарий">
-            <button onclick="addComment(2)">Добавить</button>
         </div>
     </div>
     <footer>
@@ -99,6 +95,7 @@
                 localStorage.setItem(`liked-${id}`, "true");
                 localStorage.removeItem(`disliked-${id}`);
             }
+            animateReaction(`like-btn-${id}`);
             updateCounts(id);
         }
 
@@ -112,7 +109,16 @@
                 localStorage.setItem(`disliked-${id}`, "true");
                 localStorage.removeItem(`liked-${id}`);
             }
+            animateReaction(`dislike-btn-${id}`);
             updateCounts(id);
+        }
+
+        function animateReaction(buttonId) {
+            let button = document.getElementById(buttonId);
+            button.style.transform = "rotate(360deg) scale(1.2)";
+            setTimeout(() => {
+                button.style.transform = "rotate(0deg) scale(1)";
+            }, 300);
         }
 
         function updateCounts(id) {
@@ -122,32 +128,9 @@
             document.getElementById(`dislikes-${id}`).innerText = dislikes;
         }
 
-        function addComment(id) {
-            let input = document.getElementById(`comment-input-${id}`);
-            let text = input.value.trim();
-            if (text === "") return;
-            let comments = JSON.parse(localStorage.getItem(`comments-${id}`)) || [];
-            comments.push(text);
-            localStorage.setItem(`comments-${id}`, JSON.stringify(comments));
-            displayComments(id);
-            input.value = "";
-        }
-
-        function displayComments(id) {
-            let comments = JSON.parse(localStorage.getItem(`comments-${id}`)) || [];
-            let commentsContainer = document.getElementById(`comments-${id}`);
-            commentsContainer.innerHTML = "";
-            comments.forEach(comment => {
-                let p = document.createElement("p");
-                p.textContent = comment;
-                commentsContainer.appendChild(p);
-            });
-        }
-
         document.addEventListener("DOMContentLoaded", () => {
-            [1, 2].forEach(id => {
+            [1].forEach(id => {
                 updateCounts(id);
-                displayComments(id);
             });
         });
     </script>
