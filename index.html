@@ -42,113 +42,20 @@
             color: #ddd;
             font-size: 16px;
         }
-        .actions, .emoji-reactions {
-            display: flex;
-            align-items: center;
+        .buttons {
             margin-top: 10px;
         }
-        .btn, .emoji-reactions button {
-            background: none;
+        .buttons button {
+            background: #ff9900;
             border: none;
-            font-size: 20px;
+            padding: 5px 10px;
             cursor: pointer;
-            margin-right: 10px;
-            transition: transform 0.5s ease-in-out, color 0.3s;
-            color: white;
+            margin-right: 5px;
         }
-        .btn.active, .emoji-reactions button.active {
-            color: #ff9900;
-            transform: rotate(360deg);
-        }
-        .comment {
-            background: #222;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
-            position: relative;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeIn 0.5s forwards;
-        }
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .emoji-reactions span {
-            font-size: 14px;
-            margin-left: 5px;
-            color: white;
+        .comments {
+            margin-top: 15px;
         }
     </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            loadData();
-        });
-        
-        function saveData() {
-            let posts = document.querySelectorAll(".post");
-            let data = [];
-            posts.forEach((post, index) => {
-                data.push({
-                    likes: post.querySelector("#like-count").textContent,
-                    dislikes: post.querySelector("#dislike-count").textContent,
-                    comments: Array.from(post.querySelectorAll(".comment p")).map(c => c.textContent)
-                });
-            });
-            localStorage.setItem("blogData", JSON.stringify(data));
-        }
-        
-        function loadData() {
-            let savedData = JSON.parse(localStorage.getItem("blogData"));
-            if (!savedData) return;
-            let posts = document.querySelectorAll(".post");
-            posts.forEach((post, index) => {
-                if (savedData[index]) {
-                    post.querySelector("#like-count").textContent = savedData[index].likes;
-                    post.querySelector("#dislike-count").textContent = savedData[index].dislikes;
-                    let commentSection = post.querySelector(".comments");
-                    savedData[index].comments.forEach(commentText => {
-                        let comment = document.createElement("div");
-                        comment.classList.add("comment");
-                        comment.innerHTML = `<p>${commentText}</p>`;
-                        commentSection.appendChild(comment);
-                    });
-                }
-            });
-        }
-        
-        function toggleSingleReaction(button, type, oppositeType) {
-            let countSpan = button.nextElementSibling;
-            let oppositeButton = button.parentElement.querySelector(`.${oppositeType}`);
-            let oppositeCountSpan = oppositeButton.nextElementSibling;
-            
-            if (button.classList.contains("active")) {
-                button.classList.remove("active");
-                countSpan.textContent = parseInt(countSpan.textContent) - 1;
-            } else {
-                button.classList.add("active");
-                countSpan.textContent = parseInt(countSpan.textContent) + 1;
-                
-                if (oppositeButton.classList.contains("active")) {
-                    oppositeButton.classList.remove("active");
-                    oppositeCountSpan.textContent = parseInt(oppositeCountSpan.textContent) - 1;
-                }
-            }
-            saveData();
-        }
-        
-        function addComment(post, text) {
-            if (!text.trim()) return;
-            let commentSection = post.querySelector(".comments");
-            let comment = document.createElement("div");
-            comment.classList.add("comment");
-            comment.innerHTML = `<p>${text}</p>`;
-            commentSection.appendChild(comment);
-            saveData();
-        }
-    </script>
 </head>
 <body>
     <header>
@@ -158,16 +65,91 @@
         <div class="post">
             <h2>Первая запись</h2>
             <p>Добро пожаловать в мой блог! Здесь я буду делиться своими мыслями и идеями.</p>
-            <div class="actions">
-                <button class="btn like" onclick="toggleSingleReaction(this, 'like', 'dislike')">👍</button><span id="like-count">0</span>
-                <button class="btn dislike" onclick="toggleSingleReaction(this, 'dislike', 'like')">👎</button><span id="dislike-count">0</span>
+            <div class="buttons">
+                <button onclick="toggleLike(1)">👍 <span id="likes-1">0</span></button>
+                <button onclick="toggleDislike(1)">👎 <span id="dislikes-1">0</span></button>
             </div>
-            <div class="comments"></div>
-            <input type="text" placeholder="Оставить комментарий..." onkeypress="if(event.key === 'Enter') addComment(this.parentElement, this.value)">
+            <div class="comments" id="comments-1"></div>
+            <input type="text" id="comment-input-1" placeholder="Оставьте комментарий">
+            <button onclick="addComment(1)">Добавить</button>
+        </div>
+        <div class="post">
+            <h2>Я вас всех люблю!</h2>
+            <p>Спасибо, что заглянули в мой блог! Мне приятно делиться с вами своими мыслями. ❤️</p>
+            <div class="buttons">
+                <button onclick="toggleLike(2)">👍 <span id="likes-2">0</span></button>
+                <button onclick="toggleDislike(2)">👎 <span id="dislikes-2">0</span></button>
+            </div>
+            <div class="comments" id="comments-2"></div>
+            <input type="text" id="comment-input-2" placeholder="Оставьте комментарий">
+            <button onclick="addComment(2)">Добавить</button>
         </div>
     </div>
     <footer>
         <p>&copy; 2025 Shtorik</p>
     </footer>
+    <script>
+        function toggleLike(id) {
+            let liked = localStorage.getItem(`liked-${id}`) === "true";
+            let disliked = localStorage.getItem(`disliked-${id}`) === "true";
+            
+            if (liked) {
+                localStorage.removeItem(`liked-${id}`);
+            } else {
+                localStorage.setItem(`liked-${id}`, "true");
+                localStorage.removeItem(`disliked-${id}`);
+            }
+            updateCounts(id);
+        }
+
+        function toggleDislike(id) {
+            let liked = localStorage.getItem(`liked-${id}`) === "true";
+            let disliked = localStorage.getItem(`disliked-${id}`) === "true";
+            
+            if (disliked) {
+                localStorage.removeItem(`disliked-${id}`);
+            } else {
+                localStorage.setItem(`disliked-${id}`, "true");
+                localStorage.removeItem(`liked-${id}`);
+            }
+            updateCounts(id);
+        }
+
+        function updateCounts(id) {
+            let likes = localStorage.getItem(`liked-${id}`) ? 1 : 0;
+            let dislikes = localStorage.getItem(`disliked-${id}`) ? 1 : 0;
+            document.getElementById(`likes-${id}`).innerText = likes;
+            document.getElementById(`dislikes-${id}`).innerText = dislikes;
+        }
+
+        function addComment(id) {
+            let input = document.getElementById(`comment-input-${id}`);
+            let text = input.value.trim();
+            if (text === "") return;
+            let comments = JSON.parse(localStorage.getItem(`comments-${id}`)) || [];
+            comments.push(text);
+            localStorage.setItem(`comments-${id}`, JSON.stringify(comments));
+            displayComments(id);
+            input.value = "";
+        }
+
+        function displayComments(id) {
+            let comments = JSON.parse(localStorage.getItem(`comments-${id}`)) || [];
+            let commentsContainer = document.getElementById(`comments-${id}`);
+            commentsContainer.innerHTML = "";
+            comments.forEach(comment => {
+                let p = document.createElement("p");
+                p.textContent = comment;
+                commentsContainer.appendChild(p);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            [1, 2].forEach(id => {
+                updateCounts(id);
+                displayComments(id);
+            });
+        });
+    </script>
 </body>
 </html>
